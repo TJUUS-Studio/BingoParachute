@@ -59,6 +59,7 @@ class ServerEventBridge(
         AttackEntityCallback.EVENT.register(AttackEntityCallback { player, _, _, entity, _ ->
             val target = entity as? PlayerEntity ?: return@AttackEntityCallback ActionResult.PASS
             if (pvpProtectionController.shouldBlock(player.uuid, target.uuid)) {
+                logBlockedPvp("melee", player.uuid, target.uuid)
                 ActionResult.FAIL
             } else {
                 ActionResult.PASS
@@ -72,8 +73,16 @@ class ServerEventBridge(
 
     private fun shouldAllowDamage(entity: LivingEntity, source: DamageSource): Boolean {
         val target = entity as? ServerPlayerEntity ?: return true
-        val attackerUuid = resolveAttackerUuid(source) ?: return true
-        return !pvpProtectionController.shouldBlock(attackerUuid, target.uuid)
+        val attackerUuid = resolveAttackerUuid(source)
+        if (attackerUuid == null) {
+            logUnresolvedProtectedDamage(target, source)
+            return true
+        }
+        val blocked = pvpProtectionController.shouldBlock(attackerUuid, target.uuid)
+        if (blocked) {
+            logBlockedPvp("damage", attackerUuid, target.uuid)
+        }
+        return !blocked
     }
 
     private fun resolveAttackerUuid(source: DamageSource): UUID? {
@@ -110,5 +119,30 @@ class ServerEventBridge(
         }.getOrNull()?.let { return it }
 
         return null
+    }
+
+    private fun logBlockedPvp(channel: String, attackerUuid: UUID, targetUuid: UUID) {
+        if (!BingoParachuteMod.configManager.config.debugLogging) {
+            return
+        }
+        BingoParachuteMod.log.info(
+            "Blocked protected PVP [{}] attacker={} target={}",
+            channel,
+            attackerUuid,
+            targetUuid
+        )
+    }
+
+    private fun logUnresolvedProtectedDamage(target: ServerPlayerEntity, source: DamageSource) {
+        if (!BingoParachuteMod.configManager.config.debugLogging || !pvpProtectionController.isProtected(target.uuid)) {
+            return
+        }
+        BingoParachuteMod.log.warn(
+            "Protected player {} received damage with unresolved attacker (directSource={}, attacker={}, source={})",
+            target.uuid,
+            source.source?.javaClass?.simpleName ?: "null",
+            source.attacker?.javaClass?.simpleName ?: "null",
+            source
+        )
     }
 }
