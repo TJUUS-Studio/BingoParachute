@@ -13,6 +13,7 @@ class AirDropRuntimeController(
     log: Logger,
 ) {
     private val batHandler = BatCarrierHandler(log)
+    private val elytraHandler = ElytraCarrierHandler(log)
     private val loadoutCustodian = PlayerLoadoutCustodian(ServerPlayerLoadoutAdapter())
     private val notificationAdapter = ServerPlayerNotificationAdapter()
     private val coordinator = AirDropRuntimeCoordinator(
@@ -20,11 +21,7 @@ class AirDropRuntimeController(
         configManager = configManager,
         handlers = mapOf<AirDropConfig.CarrierMode, CarrierModeHandler<ServerPlayerEntity>>(
             AirDropConfig.CarrierMode.BAT to batHandler,
-            AirDropConfig.CarrierMode.ELYTRA to FallbackCarrierHandler<ServerPlayerEntity>(
-                mode = AirDropConfig.CarrierMode.ELYTRA,
-                delegate = batHandler,
-                log = log,
-            ),
+            AirDropConfig.CarrierMode.ELYTRA to elytraHandler,
         ),
         loadoutCustodian = loadoutCustodian,
         notificationAdapter = notificationAdapter,
