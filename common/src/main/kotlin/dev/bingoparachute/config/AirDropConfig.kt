@@ -1,0 +1,38 @@
+package dev.bingoparachute.config
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class AirDropConfig(
+    val enabled: Boolean = true,
+    val debugLogging: Boolean = true,
+    val mode: CarrierMode = CarrierMode.BAT,
+    val spawnHeight: Int = 196,
+    val pvpProtectionSeconds: Int = 8,
+    val bat: BatConfig = BatConfig(),
+    val elytra: ElytraConfig = ElytraConfig(),
+    val removeOnTouchGround: Boolean = true,
+    val removeOnTouchWater: Boolean = true,
+) {
+    @Serializable
+    enum class CarrierMode {
+        BAT,
+        ELYTRA,
+    }
+
+    @Serializable
+    data class BatConfig(
+        val descentSpeed: Double = 0.11,
+        val horizontalSpeed: Double = 0.32,
+        val horizontalAcceleration: Double = 0.08,
+        val maxHorizontalRadius: Double = 48.0,
+    )
+
+    @Serializable
+    data class ElytraConfig(
+        val glideSpeedScale: Double = 0.85,
+        val maxDiveSpeed: Double = 0.9,
+        val maxHorizontalRadius: Double = 56.0,
+    )
+}
+

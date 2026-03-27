@@ -1,0 +1,29 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.plugin.serialization"
+}
+
+version = project.rootProject.property("mod_version")
+group = project.rootProject.property("maven_group")
+
+base {
+    archivesName = "${project.rootProject.property("archives_base_name")}-common"
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0"
+    implementation "org.slf4j:slf4j-api:2.0.17"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}

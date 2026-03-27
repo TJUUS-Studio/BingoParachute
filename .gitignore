@@ -1,0 +1,12 @@
+.gradle/
+build/
+out/
+run/
+logs/
+*.iml
+.idea/
+.ai_doc/
+.vscode/
+.reference/
+.kotlin/
+

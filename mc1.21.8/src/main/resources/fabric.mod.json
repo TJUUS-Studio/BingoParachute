@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "bingo-parachute",
+  "version": "${version}",
+  "name": "Bingo Parachute",
+  "description": "Addon mod for Yet Another Minecraft Bingo that adds an airdrop start phase.",
+  "authors": [
+    "OpenAI Codex"
+  ],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "dev.bingoparachute.BingoParachuteMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "fabric-language-kotlin": "*"
+  }
+}

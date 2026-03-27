@@ -1,0 +1,13 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = "https://maven.fabricmc.net/" }
+        mavenCentral()
+    }
+}
+
+rootProject.name = "bingo-parachute"
+
+include "common"
+include "mc1.21.8"
+include "mc1.21.11"

@@ -1,0 +1,20 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "2.2.21" apply false
+    id "org.jetbrains.kotlin.plugin.serialization" version "2.2.21" apply false
+    id "fabric-loom" version "1.13.3" apply false
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url = "https://maven.fabricmc.net/" }
+    }
+}
+
+tasks.register("compileMods") {
+    dependsOn(
+        subprojects.collect { project ->
+            project.tasks.findByName("compileKotlin")
+        }.findAll { it != null }
+    )
+}
