@@ -7,6 +7,7 @@ data class AirDropConfig(
     val enabled: Boolean = true,
     val debugLogging: Boolean = true,
     val mode: CarrierMode = CarrierMode.BAT,
+    val startDelayTicks: Int = 10,
     val spawnHeight: Int = 196,
     val pvpProtectionSeconds: Int = 8,
     val bat: BatConfig = BatConfig(),

@@ -26,6 +26,9 @@ class AirDropRuntimeCoordinator<PlayerT>(
         val session = sessionManager.currentSession ?: return
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
+            if (tick < state.activationTick) {
+                continue
+            }
             ensureLoadoutStored(player, state)
             if (handleTimeout(player, state, tick, config)) {
                 maybeRestoreLoadout(player, state)

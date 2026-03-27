@@ -98,12 +98,15 @@ class BatCarrierHandler(
         state.carrierEntityId = bat.id
 
         log.info(
-            "Started bat descent for player {} in session {} at ({}, {}, {})",
+            "Started bat descent for player {} in session {} at ({}, {}, {}) [originSource={}, activationTick={}, startedAtTick={}]",
             player.uuid,
             state.sessionId,
             randomX,
             startY,
-            randomZ
+            randomZ,
+            state.originSource,
+            state.activationTick,
+            tick,
         )
     }
 

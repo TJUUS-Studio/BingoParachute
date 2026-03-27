@@ -19,6 +19,20 @@ data class BingoSnapshot(
                 }
             }
         }
+
+    val playerOriginSources: Map<UUID, String>
+        get() = buildMap {
+            for (team in teams) {
+                val source = if (team.spawnpoint != null) {
+                    "team_spawnpoint:${team.id}"
+                } else {
+                    "player_position_fallback"
+                }
+                for (player in team.players) {
+                    put(player, source)
+                }
+            }
+        }
 }
 
 data class BingoTeamSnapshot(

@@ -26,23 +26,33 @@ class BingoLifecycleBridge(
             val sessionId = snapshot?.gameId
                 ?: args.firstOrNull()?.let(::extractGameId)
                 ?: UUID.randomUUID()
+            val startDelayTicks = BingoParachuteMod.configManager.config.startDelayTicks
+            val activationTick = sessionManager.currentTick + startDelayTicks
             sessionManager.onGameStarted(
                 sessionId = sessionId,
                 players = snapshot?.activePlayerIds ?: emptyList(),
                 mode = BingoParachuteMod.configManager.config.mode,
                 playerOrigins = snapshot?.playerOrigins ?: emptyMap(),
+                playerOriginSources = snapshot?.playerOriginSources ?: emptyMap(),
+                activationTick = activationTick,
             )
             BingoParachuteMod.log.info(
-                "GAME_STARTED snapshot resolved: status={}, activePlayers={}, teamsWithSpawnpoint={}",
+                "GAME_STARTED snapshot resolved: status={}, activePlayers={}, teamsWithSpawnpoint={}, activationTick={}, startDelayTicks={}",
                 snapshot?.status,
                 snapshot?.activePlayerIds?.size ?: 0,
                 snapshot?.teams?.count { it.spawnpoint != null } ?: 0,
+                activationTick,
+                startDelayTicks,
             )
             if (BingoParachuteMod.configManager.config.debugLogging) {
                 BingoParachuteMod.log.info(
                     "GAME_STARTED origins prepared for {} players; sample={}",
                     snapshot?.playerOrigins?.size ?: 0,
-                    snapshot?.playerOrigins?.entries?.take(3)?.joinToString { "${it.key}=${it.value}" } ?: "none"
+                    snapshot?.activePlayerIds?.take(3)?.joinToString { playerId ->
+                        val origin = snapshot.playerOrigins[playerId]?.toString() ?: "player_position"
+                        val source = snapshot.playerOriginSources[playerId] ?: "player_position_fallback"
+                        "$playerId=$origin@$source"
+                    } ?: "none"
                 )
             }
             Unit

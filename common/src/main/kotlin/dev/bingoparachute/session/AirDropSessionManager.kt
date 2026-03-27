@@ -70,6 +70,8 @@ class AirDropSessionManager(
         players: Collection<UUID>,
         mode: AirDropConfig.CarrierMode,
         playerOrigins: Map<UUID, Position3d> = emptyMap(),
+        playerOriginSources: Map<UUID, String> = emptyMap(),
+        activationTick: Long = currentTick,
     ) {
         val session = AirDropSession(sessionId = sessionId)
         session.playerStates.putAll(
@@ -78,17 +80,20 @@ class AirDropSessionManager(
                     playerUuid = uuid,
                     sessionId = sessionId,
                     mode = mode,
-                    origin = playerOrigins[uuid] ?: Position3d.ZERO
+                    origin = playerOrigins[uuid] ?: Position3d.ZERO,
+                    originSource = playerOriginSources[uuid] ?: "player_position_fallback",
+                    activationTick = activationTick,
                 )
             }
         )
         currentSession = session
 
         log.info(
-            "Created airdrop session {} with {} tracked players (playersWithPreferredOrigin={})",
+            "Created airdrop session {} with {} tracked players (playersWithPreferredOrigin={}, activationTick={})",
             sessionId,
             session.playerStates.size,
-            playerOrigins.size
+            playerOrigins.size,
+            activationTick
         )
     }
 
