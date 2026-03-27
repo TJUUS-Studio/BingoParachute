@@ -51,8 +51,9 @@ class AirDropRuntimeController(
         coordinator.cleanupPlayer(player.uuid, player, "player_disconnect")
     }
 
-    fun onPlayerRespawn(player: ServerPlayerEntity) {
-        coordinator.restorePlayerLoadout(player.uuid, player)
+    fun onPlayerRespawn(oldPlayer: ServerPlayerEntity, newPlayer: ServerPlayerEntity) {
+        coordinator.cleanupPlayer(oldPlayer.uuid, oldPlayer, "player_respawn", restoreLoadout = false)
+        coordinator.restorePlayerLoadout(newPlayer.uuid, newPlayer)
     }
 
     private fun cleanup(server: MinecraftServer?, reason: String) {

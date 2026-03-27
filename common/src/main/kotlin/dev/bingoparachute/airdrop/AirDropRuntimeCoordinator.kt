@@ -61,10 +61,21 @@ class AirDropRuntimeCoordinator<PlayerT>(
         player: PlayerT,
         reason: String,
     ) {
+        cleanupPlayer(playerUuid, player, reason, restoreLoadout = true)
+    }
+
+    fun cleanupPlayer(
+        playerUuid: UUID,
+        player: PlayerT,
+        reason: String,
+        restoreLoadout: Boolean,
+    ) {
         val state = sessionManager.currentSession?.playerStates?.get(playerUuid) ?: return
         finalizeState(state, reason)
         handlerFor(state.mode).cleanup(player, state)
-        maybeRestoreLoadout(player, state)
+        if (restoreLoadout) {
+            maybeRestoreLoadout(player, state)
+        }
     }
 
     fun restorePlayerLoadout(

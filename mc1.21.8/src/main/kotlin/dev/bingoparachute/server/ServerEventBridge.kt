@@ -51,8 +51,8 @@ class ServerEventBridge(
             sessionManager.onPlayerDisconnect(handler.player.uuid)
         }
 
-        ServerPlayerEvents.AFTER_RESPAWN.register { _, newPlayer, _ ->
-            runtimeController.onPlayerRespawn(newPlayer)
+        ServerPlayerEvents.AFTER_RESPAWN.register { oldPlayer, newPlayer, _ ->
+            runtimeController.onPlayerRespawn(oldPlayer, newPlayer)
             sessionManager.onPlayerRespawn(newPlayer.uuid)
         }
 
