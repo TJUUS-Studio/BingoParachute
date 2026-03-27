@@ -11,6 +11,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
     private val configManager: AirDropConfigManager,
     private val handlers: Map<AirDropConfig.CarrierMode, CarrierModeHandler<PlayerT>>,
     private val loadoutCustodian: PlayerLoadoutCustodian<PlayerT, *>,
+    private val notificationAdapter: PlayerNotificationAdapter<PlayerT>,
     private val log: Logger,
 ) {
     fun onTick(
@@ -26,6 +27,10 @@ class AirDropRuntimeCoordinator<PlayerT>(
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
             ensureLoadoutStored(player, state)
+            if (handleTimeout(player, state, tick, config)) {
+                maybeRestoreLoadout(player, state)
+                continue
+            }
             handlerFor(state.mode).tick(
                 player = player,
                 session = session,
@@ -76,6 +81,55 @@ class AirDropRuntimeCoordinator<PlayerT>(
 
     private fun handlerFor(mode: AirDropConfig.CarrierMode): CarrierModeHandler<PlayerT> {
         return handlers.getValue(mode)
+    }
+
+    private fun handleTimeout(
+        player: PlayerT,
+        state: dev.bingoparachute.session.AirDropPlayerState,
+        tick: Long,
+        config: AirDropConfig,
+    ): Boolean {
+        if (state.phase == dev.bingoparachute.session.AirDropPhase.FINISHED || state.spawnedAtTick == 0L) {
+            return false
+        }
+
+        val timeoutTicks = config.pvpProtectionSeconds * 20L
+        val deadlineTick = state.spawnedAtTick + timeoutTicks
+        val remainingTicks = deadlineTick - tick
+        maybeSendTimeoutCountdown(player, state, remainingTicks)
+
+        if (remainingTicks > 0L) {
+            return false
+        }
+
+        state.phase = dev.bingoparachute.session.AirDropPhase.FINISHED
+        state.finishedReason = "timeout"
+        handlerFor(state.mode).cleanup(player, state)
+        if (config.debugLogging) {
+            log.info("Forced airdrop finish on timeout for player {}", state.playerUuid)
+        }
+        return true
+    }
+
+    private fun maybeSendTimeoutCountdown(
+        player: PlayerT,
+        state: dev.bingoparachute.session.AirDropPlayerState,
+        remainingTicks: Long,
+    ) {
+        if (remainingTicks <= 0L) {
+            return
+        }
+
+        val remainingSeconds = ((remainingTicks + 19L) / 20L).toInt()
+        if (remainingSeconds !in 1..5) {
+            return
+        }
+        if (state.lastTimeoutWarningSecond == remainingSeconds) {
+            return
+        }
+
+        state.lastTimeoutWarningSecond = remainingSeconds
+        notificationAdapter.sendTimeoutCountdown(player, remainingSeconds)
     }
 
     private fun ensureLoadoutStored(player: PlayerT, state: dev.bingoparachute.session.AirDropPlayerState) {
