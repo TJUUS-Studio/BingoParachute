@@ -44,10 +44,12 @@ class AirDropRuntimeCoordinator<PlayerT>(
 
     fun cleanup(
         resolvePlayer: (UUID) -> PlayerT?,
+        reason: String,
     ) {
         val session = sessionManager.currentSession ?: return
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
+            finalizeState(state, reason)
             handlerFor(state.mode).cleanup(player, state)
             maybeRestoreLoadout(player, state)
         }
@@ -57,8 +59,10 @@ class AirDropRuntimeCoordinator<PlayerT>(
     fun cleanupPlayer(
         playerUuid: UUID,
         player: PlayerT,
+        reason: String,
     ) {
         val state = sessionManager.currentSession?.playerStates?.get(playerUuid) ?: return
+        finalizeState(state, reason)
         handlerFor(state.mode).cleanup(player, state)
         maybeRestoreLoadout(player, state)
     }
@@ -74,7 +78,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
         if (!loadoutCustodian.hasSnapshot(playerUuid)) {
             return false
         }
-        state.phase = dev.bingoparachute.session.AirDropPhase.FINISHED
+        finalizeState(state, "respawn_restore")
         maybeRestoreLoadout(player, state)
         return state.loadoutRestored
     }
@@ -102,8 +106,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
             return false
         }
 
-        state.phase = dev.bingoparachute.session.AirDropPhase.FINISHED
-        state.finishedReason = "timeout"
+        finalizeState(state, "timeout")
         handlerFor(state.mode).cleanup(player, state)
         if (config.debugLogging) {
             log.info("Forced airdrop finish on timeout for player {}", state.playerUuid)
@@ -130,6 +133,14 @@ class AirDropRuntimeCoordinator<PlayerT>(
 
         state.lastTimeoutWarningSecond = remainingSeconds
         notificationAdapter.sendTimeoutCountdown(player, remainingSeconds)
+    }
+
+    private fun finalizeState(
+        state: dev.bingoparachute.session.AirDropPlayerState,
+        reason: String,
+    ) {
+        state.phase = dev.bingoparachute.session.AirDropPhase.FINISHED
+        state.finishedReason = reason
     }
 
     private fun ensureLoadoutStored(player: PlayerT, state: dev.bingoparachute.session.AirDropPlayerState) {

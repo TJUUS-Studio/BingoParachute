@@ -36,27 +36,27 @@ class AirDropRuntimeController(
     }
 
     fun onServerStopping(server: MinecraftServer?) {
-        cleanup(server)
+        cleanup(server, "server_stopping")
     }
 
     fun onGameReset(server: MinecraftServer?) {
-        cleanup(server)
+        cleanup(server, "game_reset")
     }
 
     fun onGameEnded(server: MinecraftServer?) {
-        cleanup(server)
+        cleanup(server, "game_ended")
     }
 
     fun onPlayerDisconnect(player: ServerPlayerEntity) {
-        coordinator.cleanupPlayer(player.uuid, player)
+        coordinator.cleanupPlayer(player.uuid, player, "player_disconnect")
     }
 
     fun onPlayerRespawn(player: ServerPlayerEntity) {
         coordinator.restorePlayerLoadout(player.uuid, player)
     }
 
-    private fun cleanup(server: MinecraftServer?) {
+    private fun cleanup(server: MinecraftServer?, reason: String) {
         val activeServer = server ?: return
-        coordinator.cleanup(activeServer.playerManager::getPlayer)
+        coordinator.cleanup(activeServer.playerManager::getPlayer, reason)
     }
 }
