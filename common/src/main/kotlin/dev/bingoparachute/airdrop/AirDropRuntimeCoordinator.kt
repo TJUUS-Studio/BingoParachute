@@ -138,7 +138,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
         }
 
         val remainingSeconds = ((remainingTicks + 19L) / 20L).toInt()
-        if (remainingSeconds !in 1..5) {
+        if (remainingSeconds !in 1..10) {
             return
         }
         if (state.lastTimeoutWarningSecond == remainingSeconds) {
