@@ -25,6 +25,11 @@ dependencies {
     implementation project(":common")
 }
 
+tasks.named("jar") {
+    dependsOn(":common:classes")
+    from(project(":common").sourceSets.main.output)
+}
+
 processResources {
     inputs.property "version", project.version
 
