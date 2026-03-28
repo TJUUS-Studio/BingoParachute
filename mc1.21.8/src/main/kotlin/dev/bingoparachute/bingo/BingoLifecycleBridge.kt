@@ -38,17 +38,18 @@ class BingoLifecycleBridge(
             val sessionId = snapshot?.gameId
                 ?: args.firstOrNull()?.let(::extractGameId)
                 ?: UUID.randomUUID()
-            val preparedOrigins = if (countdownAnchorGameId == sessionId && countdownAnchors.isNotEmpty()) {
+            val reuseCountdownAnchors = countdownAnchors.isNotEmpty()
+            val preparedOrigins = if (reuseCountdownAnchors) {
                 countdownAnchors
             } else {
                 snapshot?.playerOrigins ?: emptyMap()
             }
-            val preparedOriginSources = if (countdownAnchorGameId == sessionId && countdownAnchorSources.isNotEmpty()) {
+            val preparedOriginSources = if (reuseCountdownAnchors) {
                 countdownAnchorSources
             } else {
                 snapshot?.playerOriginSources ?: emptyMap()
             }
-            val startDelayTicks = if (countdownAnchorGameId == sessionId && countdownAnchors.isNotEmpty()) {
+            val startDelayTicks = if (reuseCountdownAnchors) {
                 0
             } else {
                 BingoParachuteMod.configManager.config.startDelayTicks
@@ -63,6 +64,13 @@ class BingoLifecycleBridge(
                 activationTick = activationTick,
                 isPvpEnabled = snapshot?.isPvpEnabled == true,
             )
+            if (reuseCountdownAnchors) {
+                repositionPlayersToPreparedOrigins(
+                    server = BingoParachuteMod.server,
+                    playerIds = snapshot?.activePlayerIds ?: emptySet(),
+                    preparedOrigins = preparedOrigins,
+                )
+            }
             BingoParachuteMod.log.info(
                 "GAME_STARTED snapshot resolved: status={}, activePlayers={}, teamsWithSpawnpoint={}, activationTick={}, startDelayTicks={}, pvpEnabled={}",
                 snapshot?.status,
@@ -74,8 +82,9 @@ class BingoLifecycleBridge(
             )
             if (BingoParachuteMod.configManager.config.debugLogging) {
                 BingoParachuteMod.log.info(
-                    "GAME_STARTED origins prepared for {} players; sample={}",
+                    "GAME_STARTED origins prepared for {} players; reusedCountdownAnchors={}; sample={}",
                     preparedOrigins.size,
+                    reuseCountdownAnchors,
                     snapshot?.activePlayerIds?.take(3)?.joinToString { playerId ->
                         val origin = preparedOrigins[playerId]?.toString() ?: "player_position"
                         val source = preparedOriginSources[playerId] ?: "player_position_fallback"
@@ -193,6 +202,19 @@ class BingoLifecycleBridge(
         player.networkHandler.requestTeleport(anchor.x, targetY, anchor.z, player.yaw, player.pitch)
         player.velocity = player.velocity.multiply(0.0)
         player.fallDistance = 0.0
+    }
+
+    private fun repositionPlayersToPreparedOrigins(
+        server: MinecraftServer?,
+        playerIds: Collection<UUID>,
+        preparedOrigins: Map<UUID, Position3d>,
+    ) {
+        val activeServer = server ?: return
+        for (playerId in playerIds) {
+            val player = activeServer.playerManager.getPlayer(playerId) ?: continue
+            val anchor = preparedOrigins[playerId] ?: continue
+            pinPlayerToCountdownAnchor(player, anchor)
+        }
     }
 
     private fun normalizedOffset(seed: Long): Double {
