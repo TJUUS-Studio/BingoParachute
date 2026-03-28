@@ -25,7 +25,6 @@ data class AirDropConfig(
     data class BatConfig(
         val descentSpeed: Double = 0.11,
         val horizontalSpeed: Double = 0.32,
-        val horizontalAcceleration: Double = 0.08,
         val maxHorizontalRadius: Double = 48.0,
     )
 
