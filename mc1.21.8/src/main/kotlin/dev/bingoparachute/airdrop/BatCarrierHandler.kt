@@ -39,7 +39,7 @@ class BatCarrierHandler(
 
         val bat = player.vehicle as? BatEntity
         if (bat == null || bat.id != state.carrierEntityId) {
-            release(player, state)
+            release(player, state, tick, config)
             val finishReason = finishReason(player, config)
             if (finishReason != null) {
                 finish(player, state, finishReason)
@@ -120,21 +120,25 @@ class BatCarrierHandler(
     private fun release(
         player: ServerPlayerEntity,
         state: AirDropPlayerState,
+        tick: Long,
+        config: AirDropConfig,
     ) {
         if (state.phase == AirDropPhase.RELEASED) {
             return
         }
 
         state.phase = AirDropPhase.RELEASED
+        state.timeoutFallImmuneUntilTick = tick + config.timeoutFallImmunitySeconds * 20L
         discardTrackedBat(player, state)
         state.carrierEntityId = null
         player.stopRiding()
         player.fallDistance = 0.0
 
         log.info(
-            "Player {} released from bat carrier in session {}",
+            "Player {} released from bat carrier in session {} (fallImmunitySeconds={})",
             player.uuid,
             state.sessionId,
+            config.timeoutFallImmunitySeconds,
         )
     }
 
