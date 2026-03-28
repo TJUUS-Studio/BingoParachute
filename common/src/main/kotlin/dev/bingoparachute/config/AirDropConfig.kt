@@ -9,7 +9,7 @@ data class AirDropConfig(
     val mode: CarrierMode = CarrierMode.BAT,
     val startDelayTicks: Int = 10,
     val spawnHeight: Int = 196,
-    val pvpProtectionSeconds: Int = 8,
+    val pvpProtectionSeconds: Int = 30,
     val bat: BatConfig = BatConfig(),
     val elytra: ElytraConfig = ElytraConfig(),
     val removeOnTouchGround: Boolean = true,
