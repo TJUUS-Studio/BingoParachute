@@ -154,13 +154,7 @@ class BatCarrierHandler(
     ) {
         val batConfig = config.bat
         val look = bat.firstPassenger?.rotationVector ?: Vec3d.ZERO
-        val horizontalLook = Vec3d(look.x, 0.0, look.z)
-        val horizontalLength = sqrt(horizontalLook.x * horizontalLook.x + horizontalLook.z * horizontalLook.z)
-        val normalizedLook = if (horizontalLength > 0.0001) {
-            horizontalLook.multiply(1.0 / horizontalLength)
-        } else {
-            Vec3d.ZERO
-        }
+        val directionalVelocity = look.multiply(batConfig.flightSpeed)
 
         val fromOriginX = bat.x - state.origin.x
         val fromOriginZ = bat.z - state.origin.z
@@ -175,16 +169,15 @@ class BatCarrierHandler(
             val returnVector = Vec3d(state.origin.x - bat.x, 0.0, state.origin.z - bat.z)
             val returnLength = sqrt(returnVector.x * returnVector.x + returnVector.z * returnVector.z)
             if (returnLength > 0.0001) {
-                returnVector.multiply(batConfig.horizontalSpeed / returnLength)
+                returnVector.multiply(batConfig.flightSpeed / returnLength)
             } else {
                 Vec3d.ZERO
             }
         } else {
-            normalizedLook.multiply(batConfig.horizontalSpeed * horizontalLength)
+            Vec3d(directionalVelocity.x, 0.0, directionalVelocity.z)
         }
 
-        val downwardFactor = maxOf(0.0, -look.y)
-        val verticalSpeed = -(batConfig.descentSpeed + downwardFactor * batConfig.descentSpeed)
+        val verticalSpeed = minOf(directionalVelocity.y - batConfig.descentSpeed, -batConfig.descentSpeed)
         bat.velocity = Vec3d(horizontalVelocity.x, verticalSpeed, horizontalVelocity.z)
     }
 
