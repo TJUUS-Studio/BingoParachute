@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.event.player.AttackEntityCallback
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.projectile.ProjectileEntity
 import net.minecraft.entity.damage.DamageSource
+import net.minecraft.entity.damage.DamageTypes
 import net.minecraft.entity.Entity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.server.network.ServerPlayerEntity
@@ -73,6 +74,9 @@ class ServerEventBridge(
 
     private fun shouldAllowDamage(entity: LivingEntity, source: DamageSource): Boolean {
         val target = entity as? ServerPlayerEntity ?: return true
+        if (source.isOf(DamageTypes.FALL) && sessionManager.isAirdropActive(target.uuid)) {
+            return false
+        }
         val attackerUuid = resolveAttackerUuid(source)
         if (attackerUuid == null) {
             logUnresolvedProtectedDamage(target, source)

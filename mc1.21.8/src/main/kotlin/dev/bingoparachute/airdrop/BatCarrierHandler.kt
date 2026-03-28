@@ -39,7 +39,13 @@ class BatCarrierHandler(
 
         val bat = player.vehicle as? BatEntity
         if (bat == null || bat.id != state.carrierEntityId) {
-            finish(player, state, "carrier_missing")
+            release(player, state)
+            val finishReason = finishReason(player, config)
+            if (finishReason != null) {
+                finish(player, state, finishReason)
+            } else {
+                player.fallDistance = 0.0
+            }
             return
         }
 
@@ -62,6 +68,7 @@ class BatCarrierHandler(
         if (vehicle is BatEntity && vehicle.id == state.carrierEntityId) {
             vehicle.discard()
         }
+        discardTrackedBat(player, state)
         state.carrierEntityId = null
         player.fallDistance = 0.0
     }
@@ -107,6 +114,27 @@ class BatCarrierHandler(
             state.originSource,
             state.activationTick,
             tick,
+        )
+    }
+
+    private fun release(
+        player: ServerPlayerEntity,
+        state: AirDropPlayerState,
+    ) {
+        if (state.phase == AirDropPhase.RELEASED) {
+            return
+        }
+
+        state.phase = AirDropPhase.RELEASED
+        discardTrackedBat(player, state)
+        state.carrierEntityId = null
+        player.stopRiding()
+        player.fallDistance = 0.0
+
+        log.info(
+            "Player {} released from bat carrier in session {}",
+            player.uuid,
+            state.sessionId,
         )
     }
 
@@ -162,6 +190,17 @@ class BatCarrierHandler(
             return "player_dead"
         }
         return null
+    }
+
+    private fun discardTrackedBat(
+        player: ServerPlayerEntity,
+        state: AirDropPlayerState,
+    ) {
+        val entityId = state.carrierEntityId ?: return
+        val tracked = (player.world as? ServerWorld)?.getEntityById(entityId)
+        if (tracked is BatEntity) {
+            tracked.discard()
+        }
     }
 
     private fun finish(

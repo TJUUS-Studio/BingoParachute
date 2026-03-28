@@ -117,4 +117,9 @@ class AirDropSessionManager(
             previous != null
         )
     }
+
+    fun isAirdropActive(playerUuid: UUID): Boolean {
+        val state = currentSession?.playerStates?.get(playerUuid) ?: return false
+        return state.spawnedAtTick != 0L && state.phase != AirDropPhase.FINISHED
+    }
 }
