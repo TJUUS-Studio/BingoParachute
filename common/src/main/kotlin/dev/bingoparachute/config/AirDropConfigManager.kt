@@ -23,7 +23,14 @@ class AirDropConfigManager(
         Files.createDirectories(configPath.parent)
 
         config = if (Files.exists(configPath)) {
-            json.decodeFromString(AirDropConfig.serializer(), Files.readString(configPath))
+            val rawConfig = Files.readString(configPath)
+            json.decodeFromString(AirDropConfig.serializer(), rawConfig).also { loadedConfig ->
+                val normalizedConfig = json.encodeToString(AirDropConfig.serializer(), loadedConfig)
+                if (normalizedConfig != rawConfig) {
+                    Files.writeString(configPath, normalizedConfig)
+                    log.info("Updated config file with missing defaults at {}", configPath)
+                }
+            }
         } else {
             AirDropConfig().also {
                 Files.writeString(configPath, json.encodeToString(AirDropConfig.serializer(), it))
