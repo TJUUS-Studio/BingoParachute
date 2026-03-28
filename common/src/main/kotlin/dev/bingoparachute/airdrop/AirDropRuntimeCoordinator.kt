@@ -25,11 +25,15 @@ class AirDropRuntimeCoordinator<PlayerT>(
         }
 
         val session = sessionManager.currentSession ?: return
+        val completedPlayers = mutableListOf<UUID>()
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
             if (state.phase == dev.bingoparachute.session.AirDropPhase.FINISHED) {
                 maybeRestoreLoadout(player, state)
                 maybeDispatchFinishedHook(player, state)
+                if (state.loadoutRestored && state.finishHookDispatched) {
+                    completedPlayers += playerUuid
+                }
                 continue
             }
             if (tick < state.activationTick) {
@@ -52,6 +56,15 @@ class AirDropRuntimeCoordinator<PlayerT>(
             maybeSendPvpProtectionEnded(player, state, session.isPvpEnabled, tick)
             maybeRestoreLoadout(player, state)
             maybeDispatchFinishedHook(player, state)
+            if (state.phase == dev.bingoparachute.session.AirDropPhase.FINISHED && state.loadoutRestored && state.finishHookDispatched) {
+                completedPlayers += playerUuid
+            }
+        }
+        if (completedPlayers.isNotEmpty()) {
+            completedPlayers.forEach(session.playerStates::remove)
+            if (config.debugLogging) {
+                log.info("Removed {} completed players from active airdrop tracking", completedPlayers.size)
+            }
         }
     }
 
