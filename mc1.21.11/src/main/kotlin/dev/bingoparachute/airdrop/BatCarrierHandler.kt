@@ -180,7 +180,7 @@ class BatCarrierHandler(
                 Vec3d.ZERO
             }
         } else {
-            normalizedLook.multiply(batConfig.horizontalSpeed)
+            normalizedLook.multiply(batConfig.horizontalSpeed * horizontalLength)
         }
 
         bat.velocity = Vec3d(horizontalVelocity.x, -batConfig.descentSpeed, horizontalVelocity.z)
