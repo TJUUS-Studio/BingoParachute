@@ -120,9 +120,10 @@ class BingoLifecycleBridge(
         val server = BingoParachuteMod.server ?: return
         runCatching {
             val bingoKoinClass = Class.forName("me.jfenn.bingo.platform.scope.BingoKoin")
+            val bingoKoinInstance = bingoKoinClass.getField("INSTANCE").get(null)
             val scope = bingoKoinClass.methods
                 .firstOrNull { it.name == "getScope" && it.parameterCount == 1 }
-                ?.invoke(null, server)
+                ?.invoke(bingoKoinInstance, server)
                 ?: return@runCatching false
 
             val configClass = Class.forName("me.jfenn.bingo.common.config.BingoConfig")
@@ -132,7 +133,7 @@ class BingoLifecycleBridge(
             delayChanged || secondsChanged
         }.onSuccess { changed ->
             if (changed == true) {
-                BingoParachuteMod.log.info("Forced Bingo countdown config to zero at {}", trigger)
+                BingoParachuteMod.log.info("Forced Bingo countdown config to zero at {} (COUNTDOWN will be skipped)", trigger)
             }
         }.onFailure { throwable ->
             BingoParachuteMod.log.warn("Failed to override Bingo countdown config at {}", trigger, throwable)
