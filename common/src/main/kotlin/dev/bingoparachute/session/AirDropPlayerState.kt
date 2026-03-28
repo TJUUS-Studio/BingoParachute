@@ -19,4 +19,5 @@ data class AirDropPlayerState(
     var carrierEntityId: Int? = null,
     var finishedReason: String? = null,
     var lastTimeoutWarningSecond: Int? = null,
+    var finishHookDispatched: Boolean = false,
 )

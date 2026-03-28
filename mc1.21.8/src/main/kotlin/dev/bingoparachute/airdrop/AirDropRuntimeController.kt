@@ -16,6 +16,7 @@ class AirDropRuntimeController(
     private val elytraHandler = ElytraCarrierHandler(log)
     private val loadoutCustodian = PlayerLoadoutCustodian(ServerPlayerLoadoutAdapter())
     private val notificationAdapter = ServerPlayerNotificationAdapter()
+    private val finishedHookAdapter = ServerPlayerAirdropFinishedHookAdapter()
     private val coordinator = AirDropRuntimeCoordinator(
         sessionManager = sessionManager,
         configManager = configManager,
@@ -25,6 +26,7 @@ class AirDropRuntimeController(
         ),
         loadoutCustodian = loadoutCustodian,
         notificationAdapter = notificationAdapter,
+        finishedHookAdapter = finishedHookAdapter,
         log = log,
     )
 

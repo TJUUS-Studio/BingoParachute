@@ -12,6 +12,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
     private val handlers: Map<AirDropConfig.CarrierMode, CarrierModeHandler<PlayerT>>,
     private val loadoutCustodian: PlayerLoadoutCustodian<PlayerT, *>,
     private val notificationAdapter: PlayerNotificationAdapter<PlayerT>,
+    private val finishedHookAdapter: AirDropFinishedHookAdapter<PlayerT>,
     private val log: Logger,
 ) {
     fun onTick(
@@ -42,6 +43,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
                 config = config,
             )
             maybeRestoreLoadout(player, state)
+            maybeDispatchFinishedHook(player, state)
         }
     }
 
@@ -55,6 +57,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
             finalizeState(state, reason)
             handlerFor(state.mode).cleanup(player, state)
             maybeRestoreLoadout(player, state)
+            maybeDispatchFinishedHook(player, state)
         }
         loadoutCustodian.clearSnapshots()
     }
@@ -79,6 +82,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
         if (restoreLoadout) {
             maybeRestoreLoadout(player, state)
         }
+        maybeDispatchFinishedHook(player, state)
     }
 
     fun restorePlayerLoadout(
@@ -94,6 +98,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
         }
         finalizeState(state, "respawn_restore")
         maybeRestoreLoadout(player, state)
+        maybeDispatchFinishedHook(player, state)
         return state.loadoutRestored
     }
 
@@ -189,5 +194,20 @@ class AirDropRuntimeCoordinator<PlayerT>(
                 )
             }
         }
+    }
+
+    private fun maybeDispatchFinishedHook(player: PlayerT, state: dev.bingoparachute.session.AirDropPlayerState) {
+        if (state.phase != dev.bingoparachute.session.AirDropPhase.FINISHED) {
+            return
+        }
+        if (state.finishHookDispatched) {
+            return
+        }
+        if (!state.loadoutRestored) {
+            return
+        }
+
+        finishedHookAdapter.onFinished(player, state)
+        state.finishHookDispatched = true
     }
 }
