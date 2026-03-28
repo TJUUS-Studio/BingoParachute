@@ -184,7 +184,7 @@ class BatCarrierHandler(
         }
 
         val downwardFactor = maxOf(0.0, -look.y)
-        val verticalSpeed = -(batConfig.descentSpeed + downwardFactor * batConfig.descentSpeed).coerceAtMost(batConfig.descentSpeed * 2.0)
+        val verticalSpeed = -(batConfig.descentSpeed + downwardFactor * batConfig.descentSpeed)
         bat.velocity = Vec3d(horizontalVelocity.x, verticalSpeed, horizontalVelocity.z)
     }
 
