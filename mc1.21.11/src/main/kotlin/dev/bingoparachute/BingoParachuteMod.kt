@@ -11,25 +11,27 @@ import net.fabricmc.api.ModInitializer
 import net.minecraft.server.MinecraftServer
 import org.slf4j.LoggerFactory
 
-object BingoParachuteMod : ModInitializer {
-    const val MOD_ID = "bingo-parachute"
-    private val bingoModIds = setOf("yet-another-minecraft-bingo", "bingo")
+class BingoParachuteMod : ModInitializer {
+    companion object {
+        const val MOD_ID = "bingo-parachute"
+        private val bingoModIds = setOf("yet-another-minecraft-bingo", "bingo")
 
-    val log = LoggerFactory.getLogger(MOD_ID)
-    var server: MinecraftServer? = null
-        internal set
-    lateinit var configManager: AirDropConfigManager
-        private set
-    lateinit var sessionManager: AirDropSessionManager
-        private set
-    lateinit var pvpProtectionController: PvpProtectionController
-        private set
-    lateinit var runtimeController: AirDropRuntimeController
-        private set
-    lateinit var bingoBridge: BingoLifecycleBridge
-        private set
-    lateinit var serverEventBridge: ServerEventBridge
-        private set
+        val log = LoggerFactory.getLogger(MOD_ID)
+        var server: MinecraftServer? = null
+            internal set
+        lateinit var configManager: AirDropConfigManager
+            private set
+        lateinit var sessionManager: AirDropSessionManager
+            private set
+        lateinit var pvpProtectionController: PvpProtectionController
+            private set
+        lateinit var runtimeController: AirDropRuntimeController
+            private set
+        lateinit var bingoBridge: BingoLifecycleBridge
+            private set
+        lateinit var serverEventBridge: ServerEventBridge
+            private set
+    }
 
     override fun onInitialize() {
         val configPath = FabricLoader.getInstance().configDir.resolve("bingo-parachute.json")
