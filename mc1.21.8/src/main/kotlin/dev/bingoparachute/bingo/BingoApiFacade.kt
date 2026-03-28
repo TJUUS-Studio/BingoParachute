@@ -116,12 +116,25 @@ class BingoApiFacade {
                 ?.invoke(target)
         }.getOrNull() ?: runCatching {
             target.javaClass.getDeclaredField(fieldName).apply { isAccessible = true }.get(target)
-        }.getOrNull() ?: return null
+        }.getOrNull() ?: unwrapDelegate(target)?.let { delegate ->
+            runCatching {
+                delegate.javaClass.methods.firstOrNull { it.name == getterName && it.parameterCount == 0 }
+                    ?.invoke(delegate)
+            }.getOrNull() ?: runCatching {
+                delegate.javaClass.getDeclaredField(fieldName).apply { isAccessible = true }.get(delegate)
+            }.getOrNull()
+        } ?: return null
 
         val x = readCoordinate(value, "getX", "x") ?: return null
         val y = readCoordinate(value, "getY", "y") ?: return null
         val z = readCoordinate(value, "getZ", "z") ?: return null
         return dev.bingoparachute.model.Position3d(x, y, z)
+    }
+
+    private fun unwrapDelegate(target: Any): Any? {
+        return runCatching {
+            target.javaClass.getDeclaredField("team").apply { isAccessible = true }.get(target)
+        }.getOrNull()
     }
 
     private fun readCoordinate(target: Any, getterName: String, fieldName: String): Double? {
