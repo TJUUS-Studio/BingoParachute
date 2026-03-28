@@ -3,8 +3,8 @@ package dev.bingoparachute.bingo
 import dev.bingoparachute.BingoParachuteMod
 import dev.bingoparachute.airdrop.AirDropRuntimeController
 import dev.bingoparachute.session.AirDropSessionManager
-import java.lang.reflect.Proxy
 import java.util.UUID
+import java.util.function.Consumer
 
 class BingoLifecycleBridge(
     private val sessionManager: AirDropSessionManager,
@@ -76,34 +76,21 @@ class BingoLifecycleBridge(
             val eventsClass = Class.forName("me.jfenn.bingo.api.BingoEvents")
             val eventField = eventsClass.getField(fieldName)
             val eventListener = eventField.get(null)
-            val eventListenerClass = eventListener.javaClass
-            val callbackMethod = eventListenerClass.methods.firstOrNull {
-                it.name == "invoke" && it.parameterCount == 1 && it.parameterTypes[0].name.contains("Function")
+            val registerMethod = eventListener.javaClass.methods.firstOrNull {
+                it.name == "register" &&
+                    it.parameterCount == 1 &&
+                    Consumer::class.java.isAssignableFrom(it.parameterTypes[0])
             }
 
-            if (callbackMethod == null) {
+            if (registerMethod == null) {
                 BingoParachuteMod.log.warn("Bingo event {} exists, but listener registration method was not found", fieldName)
                 return
             }
 
-            val functionClass = callbackMethod.parameterTypes[0]
-            val proxy = Proxy.newProxyInstance(
-                functionClass.classLoader,
-                arrayOf(functionClass)
-            ) { _, method, args ->
-                when (method.name) {
-                    "invoke" -> {
-                        handler(args ?: emptyArray())
-                        Unit
-                    }
-                    "toString" -> "BingoParachute-$fieldName-listener"
-                    "hashCode" -> System.identityHashCode(this)
-                    "equals" -> false
-                    else -> null
-                }
+            val callback = Consumer<Any?> { event ->
+                handler(if (event == null) emptyArray() else arrayOf(event))
             }
-
-            callbackMethod.invoke(eventListener, proxy)
+            registerMethod.invoke(eventListener, callback)
             BingoParachuteMod.log.info("Registered Bingo listener for {}", fieldName)
         } catch (e: ClassNotFoundException) {
             BingoParachuteMod.log.info("Bingo API not found; {} listener not registered yet", fieldName)
