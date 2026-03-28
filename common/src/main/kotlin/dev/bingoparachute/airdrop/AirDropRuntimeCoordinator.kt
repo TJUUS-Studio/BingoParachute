@@ -27,6 +27,11 @@ class AirDropRuntimeCoordinator<PlayerT>(
         val session = sessionManager.currentSession ?: return
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
+            if (state.phase == dev.bingoparachute.session.AirDropPhase.FINISHED) {
+                maybeRestoreLoadout(player, state)
+                maybeDispatchFinishedHook(player, state)
+                continue
+            }
             if (tick < state.activationTick) {
                 maybeSendPvpPendingNotice(player, state, session.isPvpEnabled, config)
                 continue
