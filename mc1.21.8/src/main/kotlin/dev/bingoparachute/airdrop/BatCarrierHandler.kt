@@ -40,7 +40,7 @@ class BatCarrierHandler(
         val bat = player.vehicle as? BatEntity
         if (bat == null || bat.id != state.carrierEntityId) {
             release(player, state, tick, config)
-            val finishReason = finishReason(player, config)
+            val finishReason = finishReason(player, null, config)
             if (finishReason != null) {
                 finish(player, state, finishReason)
             } else {
@@ -49,7 +49,7 @@ class BatCarrierHandler(
             return
         }
 
-        val finishReason = finishReason(player, config)
+        val finishReason = finishReason(player, bat, config)
         if (finishReason != null) {
             finish(player, state, finishReason)
             return
@@ -184,9 +184,10 @@ class BatCarrierHandler(
 
     private fun finishReason(
         player: ServerPlayerEntity,
+        bat: BatEntity?,
         config: AirDropConfig,
     ): String? {
-        if (config.removeOnTouchGround && player.isOnGround) {
+        if (config.removeOnTouchGround && (player.isOnGround || bat?.isOnGround == true)) {
             return "touch_ground"
         }
         if (config.removeOnTouchWater && player.isTouchingWater) {
