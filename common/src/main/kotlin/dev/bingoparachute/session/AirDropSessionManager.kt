@@ -122,4 +122,15 @@ class AirDropSessionManager(
         val state = currentSession?.playerStates?.get(playerUuid) ?: return false
         return state.spawnedAtTick != 0L && state.phase != AirDropPhase.FINISHED
     }
+
+    fun isFallDamageImmune(playerUuid: UUID): Boolean {
+        val state = currentSession?.playerStates?.get(playerUuid) ?: return false
+        if (state.spawnedAtTick == 0L) {
+            return false
+        }
+        if (state.phase != AirDropPhase.FINISHED) {
+            return true
+        }
+        return currentTick < state.timeoutFallImmuneUntilTick
+    }
 }

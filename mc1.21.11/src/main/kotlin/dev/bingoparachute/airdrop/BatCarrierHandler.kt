@@ -156,8 +156,13 @@ class BatCarrierHandler(
         val fromOriginX = bat.x - state.origin.x
         val fromOriginZ = bat.z - state.origin.z
         val distanceFromOrigin = sqrt(fromOriginX * fromOriginX + fromOriginZ * fromOriginZ)
+        val maxHorizontalRadius = if (batConfig.maxHorizontalRadiusChunks < 0.0) {
+            Double.POSITIVE_INFINITY
+        } else {
+            batConfig.maxHorizontalRadiusChunks * 16.0
+        }
 
-        val horizontalVelocity = if (distanceFromOrigin >= batConfig.maxHorizontalRadius) {
+        val horizontalVelocity = if (distanceFromOrigin >= maxHorizontalRadius) {
             val returnVector = Vec3d(state.origin.x - bat.x, 0.0, state.origin.z - bat.z)
             val returnLength = sqrt(returnVector.x * returnVector.x + returnVector.z * returnVector.z)
             if (returnLength > 0.0001) {

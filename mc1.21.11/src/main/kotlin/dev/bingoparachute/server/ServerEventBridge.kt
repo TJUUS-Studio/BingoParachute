@@ -74,7 +74,7 @@ class ServerEventBridge(
 
     private fun shouldAllowDamage(entity: LivingEntity, source: DamageSource): Boolean {
         val target = entity as? ServerPlayerEntity ?: return true
-        if (source.isOf(DamageTypes.FALL) && sessionManager.isAirdropActive(target.uuid)) {
+        if (source.isOf(DamageTypes.FALL) && sessionManager.isFallDamageImmune(target.uuid)) {
             return false
         }
         val attackerUuid = resolveAttackerUuid(source)

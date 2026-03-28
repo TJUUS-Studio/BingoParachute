@@ -14,6 +14,7 @@ data class AirDropPlayerState(
     var activationTick: Long = 0L,
     var spawnedAtTick: Long = 0L,
     var pvpProtectedUntilTick: Long = 0L,
+    var timeoutFallImmuneUntilTick: Long = 0L,
     var loadoutStored: Boolean = false,
     var loadoutRestored: Boolean = false,
     var carrierEntityId: Int? = null,

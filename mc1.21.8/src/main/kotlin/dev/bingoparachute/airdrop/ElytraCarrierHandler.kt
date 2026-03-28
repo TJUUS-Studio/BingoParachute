@@ -118,10 +118,15 @@ class ElytraCarrierHandler(
         val fromOriginX = player.x - state.origin.x
         val fromOriginZ = player.z - state.origin.z
         val distanceFromOrigin = sqrt(fromOriginX * fromOriginX + fromOriginZ * fromOriginZ)
+        val maxHorizontalRadius = if (elytraConfig.maxHorizontalRadiusChunks < 0.0) {
+            Double.POSITIVE_INFINITY
+        } else {
+            elytraConfig.maxHorizontalRadiusChunks * 16.0
+        }
         val horizontalSpeed = 0.38 * elytraConfig.glideSpeedScale
         val verticalSpeed = -minOf(0.18, elytraConfig.maxDiveSpeed * 0.25)
 
-        val horizontalVelocity = if (distanceFromOrigin >= elytraConfig.maxHorizontalRadius) {
+        val horizontalVelocity = if (distanceFromOrigin >= maxHorizontalRadius) {
             val returnVector = Vec3d(state.origin.x - player.x, 0.0, state.origin.z - player.z)
             val returnLength = sqrt(returnVector.x * returnVector.x + returnVector.z * returnVector.z)
             if (returnLength > 0.0001) {

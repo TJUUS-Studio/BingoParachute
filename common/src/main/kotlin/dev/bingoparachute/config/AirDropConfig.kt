@@ -10,6 +10,7 @@ data class AirDropConfig(
     val startDelayTicks: Int = 10,
     val spawnHeight: Int = 196,
     val pvpProtectionSeconds: Int = 30,
+    val timeoutFallImmunitySeconds: Int = 10,
     val bat: BatConfig = BatConfig(),
     val elytra: ElytraConfig = ElytraConfig(),
     val removeOnTouchGround: Boolean = true,
@@ -25,14 +26,14 @@ data class AirDropConfig(
     data class BatConfig(
         val descentSpeed: Double = 0.11,
         val horizontalSpeed: Double = 0.32,
-        val maxHorizontalRadius: Double = 48.0,
+        val maxHorizontalRadiusChunks: Double = 3.0,
     )
 
     @Serializable
     data class ElytraConfig(
         val glideSpeedScale: Double = 0.85,
         val maxDiveSpeed: Double = 0.9,
-        val maxHorizontalRadius: Double = 56.0,
+        val maxHorizontalRadiusChunks: Double = 3.5,
     )
 }
 

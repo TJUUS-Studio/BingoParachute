@@ -134,9 +134,14 @@ class AirDropRuntimeCoordinator<PlayerT>(
         }
 
         finalizeState(state, "timeout")
+        state.timeoutFallImmuneUntilTick = tick + config.timeoutFallImmunitySeconds * 20L
         handlerFor(state.mode).cleanup(player, state)
         if (config.debugLogging) {
-            log.info("Forced airdrop finish on timeout for player {}", state.playerUuid)
+            log.info(
+                "Forced airdrop finish on timeout for player {} (extraFallImmunitySeconds={})",
+                state.playerUuid,
+                config.timeoutFallImmunitySeconds
+            )
         }
         return true
     }
