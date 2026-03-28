@@ -6,6 +6,7 @@ data class BingoSnapshot(
     val gameId: UUID,
     val status: String,
     val teams: List<BingoTeamSnapshot>,
+    val isPvpEnabled: Boolean? = null,
 ) {
     val activePlayerIds: Set<UUID>
         get() = teams.flatMapTo(linkedSetOf()) { it.players }

@@ -72,8 +72,9 @@ class AirDropSessionManager(
         playerOrigins: Map<UUID, Position3d> = emptyMap(),
         playerOriginSources: Map<UUID, String> = emptyMap(),
         activationTick: Long = currentTick,
+        isPvpEnabled: Boolean = false,
     ) {
-        val session = AirDropSession(sessionId = sessionId)
+        val session = AirDropSession(sessionId = sessionId, isPvpEnabled = isPvpEnabled)
         session.playerStates.putAll(
             players.associateWith { uuid ->
                 AirDropPlayerState(
@@ -89,11 +90,12 @@ class AirDropSessionManager(
         currentSession = session
 
         log.info(
-            "Created airdrop session {} with {} tracked players (playersWithPreferredOrigin={}, activationTick={})",
+            "Created airdrop session {} with {} tracked players (playersWithPreferredOrigin={}, activationTick={}, pvpEnabled={})",
             sessionId,
             session.playerStates.size,
             playerOrigins.size,
-            activationTick
+            activationTick,
+            isPvpEnabled,
         )
     }
 

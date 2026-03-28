@@ -35,14 +35,16 @@ class BingoLifecycleBridge(
                 playerOrigins = snapshot?.playerOrigins ?: emptyMap(),
                 playerOriginSources = snapshot?.playerOriginSources ?: emptyMap(),
                 activationTick = activationTick,
+                isPvpEnabled = snapshot?.isPvpEnabled == true,
             )
             BingoParachuteMod.log.info(
-                "GAME_STARTED snapshot resolved: status={}, activePlayers={}, teamsWithSpawnpoint={}, activationTick={}, startDelayTicks={}",
+                "GAME_STARTED snapshot resolved: status={}, activePlayers={}, teamsWithSpawnpoint={}, activationTick={}, startDelayTicks={}, pvpEnabled={}",
                 snapshot?.status,
                 snapshot?.activePlayerIds?.size ?: 0,
                 snapshot?.teams?.count { it.spawnpoint != null } ?: 0,
                 activationTick,
                 startDelayTicks,
+                snapshot?.isPvpEnabled,
             )
             if (BingoParachuteMod.configManager.config.debugLogging) {
                 BingoParachuteMod.log.info(

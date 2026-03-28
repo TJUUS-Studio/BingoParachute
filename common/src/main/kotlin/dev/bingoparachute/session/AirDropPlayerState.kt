@@ -20,4 +20,6 @@ data class AirDropPlayerState(
     var finishedReason: String? = null,
     var lastTimeoutWarningSecond: Int? = null,
     var finishHookDispatched: Boolean = false,
+    var pvpStartNoticeSent: Boolean = false,
+    var pvpEndNoticeSent: Boolean = false,
 )

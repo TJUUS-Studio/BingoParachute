@@ -28,10 +28,12 @@ class AirDropRuntimeCoordinator<PlayerT>(
         for ((playerUuid, state) in session.playerStates) {
             val player = resolvePlayer(playerUuid) ?: continue
             if (tick < state.activationTick) {
+                maybeSendPvpPendingNotice(player, state, session.isPvpEnabled, config)
                 continue
             }
             ensureLoadoutStored(player, state)
             if (handleTimeout(player, state, tick, config)) {
+                maybeSendPvpProtectionEnded(player, state, session.isPvpEnabled, tick)
                 maybeRestoreLoadout(player, state)
                 continue
             }
@@ -42,6 +44,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
                 tick = tick,
                 config = config,
             )
+            maybeSendPvpProtectionEnded(player, state, session.isPvpEnabled, tick)
             maybeRestoreLoadout(player, state)
             maybeDispatchFinishedHook(player, state)
         }
@@ -152,6 +155,40 @@ class AirDropRuntimeCoordinator<PlayerT>(
 
         state.lastTimeoutWarningSecond = remainingSeconds
         notificationAdapter.sendTimeoutCountdown(player, remainingSeconds)
+    }
+
+    private fun maybeSendPvpPendingNotice(
+        player: PlayerT,
+        state: dev.bingoparachute.session.AirDropPlayerState,
+        isPvpEnabled: Boolean,
+        config: AirDropConfig,
+    ) {
+        if (!isPvpEnabled || state.pvpStartNoticeSent) {
+            return
+        }
+
+        state.pvpStartNoticeSent = true
+        notificationAdapter.sendPvpProtectionPending(player, config.pvpProtectionSeconds)
+    }
+
+    private fun maybeSendPvpProtectionEnded(
+        player: PlayerT,
+        state: dev.bingoparachute.session.AirDropPlayerState,
+        isPvpEnabled: Boolean,
+        tick: Long,
+    ) {
+        if (!isPvpEnabled || state.pvpEndNoticeSent) {
+            return
+        }
+        if (state.spawnedAtTick == 0L || tick < state.pvpProtectedUntilTick) {
+            return
+        }
+        if (state.finishedReason == "timeout") {
+            return
+        }
+
+        state.pvpEndNoticeSent = true
+        notificationAdapter.sendPvpProtectionEnded(player)
     }
 
     private fun finalizeState(

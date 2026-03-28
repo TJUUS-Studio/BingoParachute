@@ -26,6 +26,7 @@ class BingoApiFacade {
                 ?.invoke(game)
                 ?.toString()
         }.getOrNull() ?: "UNKNOWN"
+        val isPvpEnabled = readPvpEnabled(bingoApiClass)
 
         val teams = (teamsObject as? Iterable<*>)?.mapNotNull { team ->
             val teamObject = team ?: return@mapNotNull null
@@ -42,8 +43,30 @@ class BingoApiFacade {
         return BingoSnapshot(
             gameId = gameId,
             status = status,
-            teams = teams
+            teams = teams,
+            isPvpEnabled = isPvpEnabled,
         )
+    }
+
+    private fun readPvpEnabled(bingoApiClass: Class<*>): Boolean? {
+        val currentApi = runCatching {
+            bingoApiClass.getDeclaredField("current").apply { isAccessible = true }.get(null)
+        }.getOrNull() ?: return null
+
+        val state = runCatching {
+            currentApi.javaClass.getDeclaredField("state").apply { isAccessible = true }.get(currentApi)
+        }.getOrNull() ?: return null
+
+        val options = runCatching {
+            state.javaClass.getDeclaredField("options").apply { isAccessible = true }.get(state)
+        }.getOrNull() ?: return null
+
+        return runCatching {
+            (options.javaClass.methods.firstOrNull { it.name == "isPvpEnabled" && it.parameterCount == 0 }
+                ?.invoke(options) as? Boolean)
+        }.getOrNull() ?: runCatching {
+            options.javaClass.getDeclaredField("isPvpEnabled").apply { isAccessible = true }.get(options) as? Boolean
+        }.getOrNull()
     }
 
     private fun readUuid(target: Any, getterName: String): UUID? {
