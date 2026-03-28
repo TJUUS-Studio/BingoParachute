@@ -40,6 +40,7 @@ class ServerEventBridge(
 
         ServerTickEvents.END_SERVER_TICK.register { server ->
             sessionManager.onServerTick(server.ticks.toLong())
+            BingoParachuteMod.bingoBridge.onServerTick(server)
             runtimeController.onServerTick(server)
         }
 

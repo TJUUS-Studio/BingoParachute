@@ -2,7 +2,12 @@ package dev.bingoparachute.bingo
 
 import dev.bingoparachute.BingoParachuteMod
 import dev.bingoparachute.airdrop.AirDropRuntimeController
+import dev.bingoparachute.model.BingoSnapshot
+import dev.bingoparachute.model.Position3d
 import dev.bingoparachute.session.AirDropSessionManager
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import java.util.UUID
 import java.util.function.Consumer
 
@@ -12,18 +17,20 @@ class BingoLifecycleBridge(
 ) {
     private val apiFacade = BingoApiFacade()
     private var initialized = false
+    private var countdownAnchorGameId: UUID? = null
+    private var countdownAnchors: Map<UUID, Position3d> = emptyMap()
+    private var countdownAnchorSources: Map<UUID, String> = emptyMap()
 
     fun initialize() {
         if (initialized) return
         initialized = true
 
         registerListener("INIT") { _ ->
-            maybeOverrideBingoCountdown("INIT")
             sessionManager.onBingoInit()
             Unit
         }
         registerListener("GAME_STARTING") { _ ->
-            maybeOverrideBingoCountdown("GAME_STARTING")
+            clearCountdownAnchors()
             Unit
         }
         registerListener("GAME_STARTED") { args ->
@@ -31,14 +38,28 @@ class BingoLifecycleBridge(
             val sessionId = snapshot?.gameId
                 ?: args.firstOrNull()?.let(::extractGameId)
                 ?: UUID.randomUUID()
-            val startDelayTicks = BingoParachuteMod.configManager.config.startDelayTicks
+            val preparedOrigins = if (countdownAnchorGameId == sessionId && countdownAnchors.isNotEmpty()) {
+                countdownAnchors
+            } else {
+                snapshot?.playerOrigins ?: emptyMap()
+            }
+            val preparedOriginSources = if (countdownAnchorGameId == sessionId && countdownAnchorSources.isNotEmpty()) {
+                countdownAnchorSources
+            } else {
+                snapshot?.playerOriginSources ?: emptyMap()
+            }
+            val startDelayTicks = if (countdownAnchorGameId == sessionId && countdownAnchors.isNotEmpty()) {
+                0
+            } else {
+                BingoParachuteMod.configManager.config.startDelayTicks
+            }
             val activationTick = sessionManager.currentTick + startDelayTicks
             sessionManager.onGameStarted(
                 sessionId = sessionId,
                 players = snapshot?.activePlayerIds ?: emptyList(),
                 mode = BingoParachuteMod.configManager.config.mode,
-                playerOrigins = snapshot?.playerOrigins ?: emptyMap(),
-                playerOriginSources = snapshot?.playerOriginSources ?: emptyMap(),
+                playerOrigins = preparedOrigins,
+                playerOriginSources = preparedOriginSources,
                 activationTick = activationTick,
                 isPvpEnabled = snapshot?.isPvpEnabled == true,
             )
@@ -54,25 +75,55 @@ class BingoLifecycleBridge(
             if (BingoParachuteMod.configManager.config.debugLogging) {
                 BingoParachuteMod.log.info(
                     "GAME_STARTED origins prepared for {} players; sample={}",
-                    snapshot?.playerOrigins?.size ?: 0,
+                    preparedOrigins.size,
                     snapshot?.activePlayerIds?.take(3)?.joinToString { playerId ->
-                        val origin = snapshot.playerOrigins[playerId]?.toString() ?: "player_position"
-                        val source = snapshot.playerOriginSources[playerId] ?: "player_position_fallback"
+                        val origin = preparedOrigins[playerId]?.toString() ?: "player_position"
+                        val source = preparedOriginSources[playerId] ?: "player_position_fallback"
                         "$playerId=$origin@$source"
                     } ?: "none"
                 )
             }
+            clearCountdownAnchors()
             Unit
         }
         registerListener("GAME_RESET") {
             runtimeController.onGameReset(BingoParachuteMod.server)
             sessionManager.onGameReset()
+            clearCountdownAnchors()
             Unit
         }
         registerListener("GAME_ENDED") { args ->
             runtimeController.onGameEnded(BingoParachuteMod.server)
             sessionManager.onGameEnded(args.firstOrNull()?.let(::extractGameId))
+            clearCountdownAnchors()
             Unit
+        }
+    }
+
+    fun onServerTick(server: MinecraftServer) {
+        if (!BingoParachuteMod.configManager.config.enabled) {
+            return
+        }
+        if (sessionManager.currentSession != null) {
+            return
+        }
+        if (apiFacade.readRawStateOrNull() != "COUNTDOWN") {
+            return
+        }
+
+        val snapshot = apiFacade.readSnapshotOrNull() ?: return
+        if (snapshot.playerOrigins.isEmpty()) {
+            return
+        }
+
+        val anchors = prepareCountdownAnchors(snapshot)
+        countdownAnchorGameId = snapshot.gameId
+        countdownAnchors = anchors
+        countdownAnchorSources = anchors.keys.associateWith { "countdown_anchor" }
+
+        for ((playerUuid, anchor) in anchors) {
+            val player = server.playerManager.getPlayer(playerUuid) ?: continue
+            pinPlayerToCountdownAnchor(player, anchor)
         }
     }
 
@@ -112,73 +163,46 @@ class BingoLifecycleBridge(
         }.getOrNull()
     }
 
-    private fun maybeOverrideBingoCountdown(trigger: String) {
-        if (!BingoParachuteMod.configManager.config.skipBingoCountdown) {
-            return
-        }
-
-        val server = BingoParachuteMod.server ?: return
-        runCatching {
-            val bingoKoinClass = Class.forName("me.jfenn.bingo.platform.scope.BingoKoin")
-            val bingoKoinInstance = bingoKoinClass.getField("INSTANCE").get(null)
-            val scope = bingoKoinClass.methods
-                .firstOrNull { it.name == "getScope" && it.parameterCount == 1 }
-                ?.invoke(bingoKoinInstance, server)
-                ?: return@runCatching false
-
-            val configClass = Class.forName("me.jfenn.bingo.common.config.BingoConfig")
-            val config = resolveFromScope(scope, configClass) ?: return@runCatching false
-            val delayChanged = setIntField(config, "countdownDelayTicks", 0)
-            val secondsChanged = setIntField(config, "countdownSeconds", 0)
-            delayChanged || secondsChanged
-        }.onSuccess { changed ->
-            if (changed == true) {
-                BingoParachuteMod.log.info("Forced Bingo countdown config to zero at {} (COUNTDOWN will be skipped)", trigger)
+    private fun prepareCountdownAnchors(snapshot: BingoSnapshot): Map<UUID, Position3d> {
+        return buildMap {
+            for ((playerUuid, origin) in snapshot.playerOrigins) {
+                put(playerUuid, createCountdownAnchor(playerUuid, origin))
             }
-        }.onFailure { throwable ->
-            BingoParachuteMod.log.warn("Failed to override Bingo countdown config at {}", trigger, throwable)
         }
     }
 
-    private fun resolveFromScope(scope: Any, targetClass: Class<*>): Any? {
-        scope.javaClass.methods.firstOrNull { method ->
-            method.name == "get" &&
-                method.parameterCount >= 1 &&
-                method.parameterTypes[0] == Class::class.java
-        }?.let { method ->
-            val args = arrayOfNulls<Any>(method.parameterCount)
-            args[0] = targetClass
-            return method.invoke(scope, *args)
-        }
-
-        val kClass = runCatching {
-            Class.forName("kotlin.jvm.JvmClassMappingKt").methods
-                .firstOrNull { it.name == "getKotlinClass" && it.parameterCount == 1 }
-                ?.invoke(null, targetClass)
-        }.getOrNull() ?: return null
-
-        scope.javaClass.methods.firstOrNull { method ->
-            method.name == "get" &&
-                method.parameterCount >= 1 &&
-                method.parameterTypes[0].name == "kotlin.reflect.KClass"
-        }?.let { method ->
-            val args = arrayOfNulls<Any>(method.parameterCount)
-            args[0] = kClass
-            return method.invoke(scope, *args)
-        }
-
-        return null
+    private fun createCountdownAnchor(playerUuid: UUID, origin: Position3d): Position3d {
+        val seed = playerUuid.mostSignificantBits xor playerUuid.leastSignificantBits
+        val offsetX = normalizedOffset(seed)
+        val offsetZ = normalizedOffset(seed.rotateRight(17))
+        return Position3d(
+            x = origin.x + 0.5 + offsetX,
+            y = BingoParachuteMod.configManager.config.spawnHeight.toDouble(),
+            z = origin.z + 0.5 + offsetZ,
+        )
     }
 
-    private fun setIntField(target: Any, fieldName: String, value: Int): Boolean {
-        val field = runCatching {
-            target.javaClass.getDeclaredField(fieldName).apply { isAccessible = true }
-        }.getOrNull() ?: return false
-        val previous = runCatching { field.getInt(target) }.getOrNull() ?: return false
-        if (previous == value) {
-            return false
+    private fun pinPlayerToCountdownAnchor(player: ServerPlayerEntity, anchor: Position3d) {
+        val world = player.world as? ServerWorld ?: return
+        val targetY = minOf(anchor.y, (world.topYInclusive - 4).toDouble())
+        val vehicle = player.vehicle
+        if (vehicle != null) {
+            vehicle.refreshPositionAndAngles(anchor.x, targetY - 0.4, anchor.z, vehicle.yaw, vehicle.pitch)
+            vehicle.velocity = vehicle.velocity.multiply(0.0)
         }
-        field.setInt(target, value)
-        return true
+        player.networkHandler.requestTeleport(anchor.x, targetY, anchor.z, player.yaw, player.pitch)
+        player.velocity = player.velocity.multiply(0.0)
+        player.fallDistance = 0.0
+    }
+
+    private fun normalizedOffset(seed: Long): Double {
+        val bucket = (seed ushr 16).toInt() and 0xffff
+        return (bucket / 65535.0 - 0.5) * 3.0
+    }
+
+    private fun clearCountdownAnchors() {
+        countdownAnchorGameId = null
+        countdownAnchors = emptyMap()
+        countdownAnchorSources = emptyMap()
     }
 }

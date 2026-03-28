@@ -71,12 +71,17 @@ class ElytraCarrierHandler(
     ) {
         val world = player.world as ServerWorld
         val clampedHeight = max(player.y.toInt() + 8, world.topYInclusive - 4)
-        val startY = minOf(config.spawnHeight, clampedHeight).toDouble()
         val preferredOrigin = state.origin.takeUnless { it == Position3d.ZERO }
-        val baseX = preferredOrigin?.x?.plus(0.5) ?: player.x
-        val baseZ = preferredOrigin?.z?.plus(0.5) ?: player.z
-        val randomX = baseX + Random.nextDouble(-1.5, 1.5)
-        val randomZ = baseZ + Random.nextDouble(-1.5, 1.5)
+        val isCountdownAnchor = state.originSource == "countdown_anchor"
+        val baseX = if (isCountdownAnchor) preferredOrigin?.x ?: player.x else preferredOrigin?.x?.plus(0.5) ?: player.x
+        val baseZ = if (isCountdownAnchor) preferredOrigin?.z ?: player.z else preferredOrigin?.z?.plus(0.5) ?: player.z
+        val startY = if (isCountdownAnchor && preferredOrigin != null) {
+            minOf(preferredOrigin.y, (world.topYInclusive - 4).toDouble())
+        } else {
+            minOf(config.spawnHeight, clampedHeight).toDouble()
+        }
+        val randomX = if (isCountdownAnchor) baseX else baseX + Random.nextDouble(-1.5, 1.5)
+        val randomZ = if (isCountdownAnchor) baseZ else baseZ + Random.nextDouble(-1.5, 1.5)
 
         state.origin = Position3d(randomX, startY, randomZ)
         state.spawnedAtTick = tick

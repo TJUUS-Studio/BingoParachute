@@ -48,6 +48,24 @@ class BingoApiFacade {
         )
     }
 
+    fun readRawStateOrNull(): String? {
+        val bingoApiClass = runCatching {
+            Class.forName("me.jfenn.bingo.api.BingoApi")
+        }.getOrNull() ?: return null
+
+        val currentApi = runCatching {
+            bingoApiClass.getDeclaredField("current").apply { isAccessible = true }.get(null)
+        }.getOrNull() ?: return null
+
+        val state = runCatching {
+            currentApi.javaClass.getDeclaredField("state").apply { isAccessible = true }.get(currentApi)
+        }.getOrNull() ?: return null
+
+        return runCatching {
+            state.javaClass.getDeclaredField("state").apply { isAccessible = true }.get(state)?.toString()
+        }.getOrNull()
+    }
+
     private fun readPvpEnabled(bingoApiClass: Class<*>): Boolean? {
         val currentApi = runCatching {
             bingoApiClass.getDeclaredField("current").apply { isAccessible = true }.get(null)

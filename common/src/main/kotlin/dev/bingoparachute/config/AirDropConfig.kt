@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 data class AirDropConfig(
     val enabled: Boolean = true,
     val debugLogging: Boolean = true,
-    val skipBingoCountdown: Boolean = false,
     val mode: CarrierMode = CarrierMode.BAT,
     val startDelayTicks: Int = 10,
     val spawnHeight: Int = 196,
