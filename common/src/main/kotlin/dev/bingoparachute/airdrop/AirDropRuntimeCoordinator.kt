@@ -148,6 +148,7 @@ class AirDropRuntimeCoordinator<PlayerT>(
 
         finalizeState(state, "timeout")
         state.timeoutFallImmuneUntilTick = tick + config.timeoutFallImmunitySeconds * 20L
+        sessionManager.grantTimeoutFallImmunity(state.playerUuid, state.timeoutFallImmuneUntilTick)
         handlerFor(state.mode).cleanup(player, state)
         if (config.debugLogging) {
             log.info(

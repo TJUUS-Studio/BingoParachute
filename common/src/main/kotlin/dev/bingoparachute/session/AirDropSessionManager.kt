@@ -8,6 +8,8 @@ import java.util.UUID
 class AirDropSessionManager(
     private val log: Logger,
 ) {
+    private val timeoutFallImmunityUntil = mutableMapOf<UUID, Long>()
+
     @Volatile
     var currentTick: Long = 0L
         private set
@@ -32,6 +34,7 @@ class AirDropSessionManager(
     fun onServerStopping() {
         val previous = currentSession
         currentSession = null
+        timeoutFallImmunityUntil.clear()
         log.info(
             "Server stopping; cleared airdrop session (hadSession={})",
             previous != null
@@ -40,6 +43,7 @@ class AirDropSessionManager(
 
     fun onServerTick(tick: Long) {
         currentTick = tick
+        timeoutFallImmunityUntil.entries.removeIf { tick >= it.value }
         val session = currentSession ?: return
         if (session.startedAtTick == 0L) {
             session.startedAtTick = tick
@@ -102,6 +106,7 @@ class AirDropSessionManager(
     fun onGameReset() {
         val previous = currentSession
         currentSession = null
+        timeoutFallImmunityUntil.clear()
         log.info(
             "Cleared airdrop session on GAME_RESET (hadSession={})",
             previous != null
@@ -111,6 +116,7 @@ class AirDropSessionManager(
     fun onGameEnded(sessionId: UUID?) {
         val previous = currentSession
         currentSession = null
+        timeoutFallImmunityUntil.clear()
         log.info(
             "Cleared airdrop session on GAME_ENDED (eventSessionId={}, hadSession={})",
             sessionId,
@@ -124,7 +130,22 @@ class AirDropSessionManager(
     }
 
     fun isFallDamageImmune(playerUuid: UUID): Boolean {
-        val state = currentSession?.playerStates?.get(playerUuid) ?: return false
-        return currentTick < state.timeoutFallImmuneUntilTick
+        val stateImmune = currentSession
+            ?.playerStates
+            ?.get(playerUuid)
+            ?.let { currentTick < it.timeoutFallImmuneUntilTick }
+            ?: false
+        if (stateImmune) {
+            return true
+        }
+        val timeoutImmuneUntil = timeoutFallImmunityUntil[playerUuid] ?: return false
+        return currentTick < timeoutImmuneUntil
+    }
+
+    fun grantTimeoutFallImmunity(
+        playerUuid: UUID,
+        untilTick: Long,
+    ) {
+        timeoutFallImmunityUntil[playerUuid] = untilTick
     }
 }
