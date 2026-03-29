@@ -26,6 +26,9 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
       - name: Build release jars
         run: ./gradlew :mc1.21.8:build :mc1.21.11:build
 
