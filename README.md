@@ -1,6 +1,6 @@
 # Bingo Parachute
 
-`Bingo Parachute` 是一个只面向 `Yet Another Minecraft Bingo` 的服务端附属 Fabric mod。
+`Bingo Parachute` 是一个只面向 `Yet Another Bingo` 的服务端附属 Fabric mod。
 
 它会在 Bingo 开局时把参赛玩家接管到高空空降流程里，而不是直接从地面出生点开始。当前主要目标是给 Bingo 提供一个可配置的开局空降体验，包括：
 
@@ -131,8 +131,19 @@
 
 运行这个 mod 需要服务器同时安装：
 
-- `Yet Another Minecraft Bingo`
+- `Yet Another Bingo`
 - `Fabric API`
+
+## 致谢
+
+- 附属目标项目：`Yet Another Bingo`
+- 代码与文档主要借助 `OpenAI Codex` 协作生成
+
+## 免责声明
+
+- 这个项目是典型的 `vibe coding` 产物，开发过程以快速试验和持续迭代为主
+- 当前实现只做了有限的编译验证和实机测试，不应视为经过完整审计、完整兼容性验证或长期维护承诺的成品
+- 对代码质量、边界行为、跨版本兼容性、性能表现以及潜在的数据或存档风险不作保证；用于正式服务器前应自行评估并充分备份
 
 ## TODO
 
