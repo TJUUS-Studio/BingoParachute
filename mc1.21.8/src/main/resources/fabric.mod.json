@@ -7,7 +7,11 @@
   "authors": [
     "OpenAI Codex"
   ],
-  "contact": {},
+  "contact": {
+    "homepage": "https://github.com/TJUUS-Studio/BingoParachute",
+    "sources": "https://github.com/TJUUS-Studio/BingoParachute",
+    "issues": "https://github.com/TJUUS-Studio/BingoParachute/issues"
+  },
   "license": "All-Rights-Reserved",
   "environment": "server",
   "entrypoints": {
