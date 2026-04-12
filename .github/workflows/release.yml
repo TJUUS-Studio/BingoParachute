@@ -65,6 +65,9 @@ jobs:
           version: ${{ github.ref_name }}
           version-type: release
           loaders: fabric
+          game-versions: |
+            1.21.8
+            1.21.11
           changelog: |
             Release ${{ github.ref_name }}
 
