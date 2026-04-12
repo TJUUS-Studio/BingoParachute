@@ -1,123 +1,125 @@
 # Bingo Parachute
 
-`Bingo Parachute` 是一个只面向 `Yet Another Bingo` 的服务端附属 Fabric mod。
+English | [中文](docs/README_zh.md)
 
-它会在 Bingo 开局时把参赛玩家接管到高空空降流程里，而不是直接从地面出生点开始。当前主要目标是给 Bingo 提供一个可配置的开局空降体验，包括：
+`Bingo Parachute` is a server-side Fabric addon for `Yet Another Bingo`.
 
-- 高空起跳
-- `BAT` / `ELYTRA` 两种模式
-- 开局前几秒强制 PVP 保护
-- 空降期间背包与装备托管
-- `BAT` 手动脱离和超时后的短时摔落免疫
-- 落地、落水、落岩浆后的自动结束
+It replaces the normal ground spawn opening with a configurable airdrop flow at the start of a Bingo match. The current feature set includes:
 
-## 当前状态
+- High-altitude match start
+- `BAT` and `ELYTRA` airdrop modes
+- Early-match PVP protection
+- Temporary inventory and equipment custody during descent
+- Short fall-damage immunity after `BAT` manual release and timeout cleanup
+- Automatic finish on ground, water, or lava contact
 
-当前项目已经可以用于实机测试，主链路包括：
+## Current Status
 
-- 通过 Bingo 生命周期事件接入游戏流程
-- 在 Bingo `COUNTDOWN` 阶段把玩家固定到未来空降起点
-- 在 `PLAYING` 后正式进入空降
-- `BAT` 模式空降
-- `ELYTRA` 模式空降
-- 开局 PVP 保护
-- 超时处理
-- 超时和 `BAT` 手动脱离后的摔落免疫
-- 落地后的结束、恢复和清理
+The project is already usable for in-game testing. The main implemented flow includes:
 
-当前实现是服务端 mod，不要求客户端安装。
+- Hooking into the Bingo lifecycle
+- Pinning players to future airdrop anchors during Bingo `COUNTDOWN`
+- Entering the actual airdrop flow after `PLAYING`
+- `BAT` airdrop mode
+- `ELYTRA` airdrop mode
+- Early-match PVP protection
+- Timeout handling
+- Fall-damage immunity after timeout and `BAT` manual release
+- Cleanup and restoration after landing
 
-## 当前支持版本
+The mod is server-side only and does not require clients to install anything.
+
+## Supported Versions
 
 - `mc1.21.11`
 - `mc1.21.8`
 
-项目结构：
+Project layout:
 
 - `common`
-  放公共流程、状态、配置和尽量不依赖 Minecraft 类型的逻辑
+  Shared flow, state, configuration, and logic that avoids direct Minecraft coupling where possible
 - `mc1.21.11`
-  放 `1.21.11` 的版本实现
+  Version-specific implementation for `1.21.11`
 - `mc1.21.8`
-  放 `1.21.8` 的版本实现
+  Version-specific implementation for `1.21.8`
 
-## 游戏流程概览
+## Flow Overview
 
-当前实际流程大致是：
+The current gameplay flow is:
 
-1. Bingo 初始化后，本 mod 注册并等待生命周期事件
-2. Bingo 进入 `COUNTDOWN` 时，本 mod 计算并缓存高空空降起点
-3. `COUNTDOWN` 期间把玩家固定在高空起点，而不是原地面出生点
-4. Bingo 进入 `PLAYING` 后创建本局空降 session
-5. 到达激活时机后：
-   - 备份并清空玩家背包/装备
-   - 进入 `BAT` 或 `ELYTRA` 模式
-6. 空降过程中持续处理：
-   - 飞行控制
-   - PVP 保护
-   - 超时倒计时
-   - 落地/落水/落岩浆/死亡判定
-7. 空降结束后：
-   - 清理临时载具或能力
-   - 在需要时给予短时摔落免疫
-   - 恢复原始背包/装备
-   - 从活跃空降跟踪中移除
+1. After Bingo initializes, this mod registers and waits for lifecycle events
+2. When Bingo enters `COUNTDOWN`, the mod computes and caches high-altitude airdrop anchors
+3. During `COUNTDOWN`, players are pinned at those high-altitude anchors instead of their normal ground spawn positions
+4. After Bingo enters `PLAYING`, the mod creates the airdrop session for the current match
+5. When activation time is reached:
+   - The player's inventory and equipment are captured and cleared
+   - The player enters `BAT` or `ELYTRA` mode
+6. During the airdrop, the mod continuously handles:
+   - Flight control
+   - PVP protection
+   - Timeout countdown
+   - Finish checks for ground, water, lava, or death
+7. After the airdrop finishes:
+   - Temporary carriers or abilities are cleaned up
+   - Short fall-damage immunity is applied when needed
+   - The original inventory and equipment are restored
+   - The player is removed from active airdrop tracking
 
-更详细的运行链路说明见：
+For a more detailed internal flow description, see:
 
 - `.ai_doc/current_strategy_and_flow.md`
 
-## 构建
+## Build
 
-编译两个版本：
+Compile both versions:
 
 ```powershell
 .\gradlew.bat :mc1.21.8:compileKotlin :mc1.21.11:compileKotlin
 ```
 
-打包 `1.21.11`：
+Build `1.21.11`:
 
 ```powershell
 .\gradlew.bat :mc1.21.11:build
 ```
 
-产物位置：
+Artifacts are generated under:
 
 - `mc1.21.11/build/libs`
 - `mc1.21.8/build/libs`
 
-## 配置
+## Configuration
 
-当前主要配置项：
+Main configuration fields:
 
 - `enabled`
-  是否启用整个附属 mod。
+  Enables or disables the addon entirely.
 - `debugLogging`
-  是否输出更详细的调试日志。
+  Enables more verbose debug logging.
 - `mode`
-  当前空降模式，`BAT` 或 `ELYTRA`。
+  Selects the active airdrop mode, `BAT` or `ELYTRA`.
 - `startDelayTicks`
-  不复用 `COUNTDOWN` 高空锚点时，`PLAYING` 后延迟多少 tick 再正式进入空降。
+  Delay after `PLAYING` before the airdrop begins when countdown anchors are not being reused.
 - `spawnHeight`
-  空降起点的目标高度。
+  Target height of the airdrop start position.
 - `pvpProtectionSeconds`
-  开局 PVP 保护时长，同时也是空降超时基准时长。
+  Length of early-match PVP protection. This also defines the base airdrop timeout duration.
 - `timeoutFallImmunitySeconds`
-  `timeout` 强制结束后额外给予的摔落免疫时长；`BAT` 模式手动 `Shift` 脱离后当前也沿用这段时长。
+  Extra fall-damage immunity duration after forced `timeout` cleanup. `BAT` manual `Shift` release currently reuses the same duration.
 - `bat.descentSpeed`
-  `BAT` 模式的固定基础下降速度。
+  Fixed base descent speed in `BAT` mode.
 - `bat.flightSpeed`
-  `BAT` 模式的飞行速度标量，视角会改变其水平/垂直分量分配。
+  Flight speed scalar in `BAT` mode. The player's look direction changes how this scalar is distributed into horizontal and vertical components.
 - `bat.maxHorizontalRadiusChunks`
-  `BAT` 模式允许偏离起点的最大水平半径，单位为区块；小于 `0` 视为无限。
+  Maximum horizontal distance from the origin in `BAT` mode, measured in chunks. Values below `0` mean unlimited.
 - `elytra.glideSpeedScale`
-  `ELYTRA` 模式的滑翔速度缩放。
+  Glide speed scale for `ELYTRA` mode.
 - `elytra.maxDiveSpeed`
-  `ELYTRA` 模式允许的最大俯冲速度。
+  Maximum dive speed for `ELYTRA` mode.
 - `elytra.maxHorizontalRadiusChunks`
-  `ELYTRA` 模式允许偏离起点的最大水平半径，单位为区块；小于 `0` 视为无限。
+  Maximum horizontal distance from the origin in `ELYTRA` mode, measured in chunks. Values below `0` mean unlimited.
 
-当前默认值示例：
+Current default examples:
 
 - `mode = BAT`
 - `spawnHeight = 196`
@@ -127,29 +129,29 @@
 - `bat.flightSpeed = 0.6`
 - `bat.maxHorizontalRadiusChunks = 10.0`
 
-## 依赖
+## Dependencies
 
-运行这个 mod 需要服务器同时安装：
+This mod requires the server to also have:
 
 - `Yet Another Bingo`
 - `Fabric API`
 
-## 致谢
+## Acknowledgements
 
-- 附属目标项目：`Yet Another Bingo`
-- 代码与文档主要借助 `OpenAI Codex` 协作生成
+- Target addon project: `Yet Another Bingo`
+- The code and docs were developed with substantial assistance from `OpenAI Codex`
 
-## 免责声明
+## Disclaimer
 
-- 这个项目是典型的 `vibe coding` 产物，开发过程以快速试验和持续迭代为主
-- 当前实现只做了有限的编译验证和实机测试，不应视为经过完整审计、完整兼容性验证或长期维护承诺的成品
-- 对代码质量、边界行为、跨版本兼容性、性能表现以及潜在的数据或存档风险不作保证；用于正式服务器前应自行评估并充分备份
-- 如果你发现 bug，欢迎提交 issue；漏洞和明确的功能性缺陷会尽量维护修复，但新功能开发、行为扩展和长期版本演进不作保证
+- This project is a typical `vibe coding` product, built with a bias toward fast iteration and experimentation
+- The current implementation has only received limited compile-time verification and in-game testing, and should not be treated as a fully audited, fully validated, or long-term supported production release
+- No guarantees are provided for code quality, edge-case behavior, cross-version compatibility, performance, or potential data/save risks; evaluate carefully and back up your environment before using it on a production server
+- If you find a bug, feel free to open an issue; vulnerabilities and clear functional defects will be fixed when possible, but new feature development, behavior expansion, and long-term version support are not guaranteed
 
 ## TODO
 
-这些目标已经明确，但目前还没有完成：
+These goals are clear, but not finished yet:
 
-- 测试 `ELYTRA` 模式的完整实机表现与边界行为
-- 测试 `1.21.8` 版本的完整实机兼容性
-- 支持更多 Minecraft 版本
+- Test the full in-game behavior and edge cases of `ELYTRA` mode
+- Test full in-game compatibility on `1.21.8`
+- Support more Minecraft versions
