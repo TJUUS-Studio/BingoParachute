@@ -13,6 +13,17 @@
 - `BAT` 手动脱离和超时后的短时摔落免疫
 - 落地、落水、落岩浆后的自动结束
 
+## 效果图
+
+### 开局倒计时阶段
+![开局倒计时阶段](images/game_start_countdown.png)
+
+### 降落过程中
+![降落过程中](images/mid_descent.png)
+
+### 落地超时提示
+![落地超时提示](images/landing_timeout_warning.png)
+
 ## 当前状态
 
 当前项目已经可以用于实机测试，主链路包括：

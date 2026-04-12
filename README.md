@@ -13,6 +13,17 @@ It replaces the normal ground spawn opening with a configurable airdrop flow at 
 - Short fall-damage immunity after `BAT` manual release and timeout cleanup
 - Automatic finish on ground, water, or lava contact
 
+## Screenshots
+
+### Game Start Countdown
+![Game Start Countdown](docs/images/game_start_countdown.png)
+
+### Mid-Descent
+![Mid-Descent](docs/images/mid_descent.png)
+
+### Landing Timeout Warning
+![Landing Timeout Warning](docs/images/landing_timeout_warning.png)
+
 ## Current Status
 
 The project is already usable for in-game testing. The main implemented flow includes:
