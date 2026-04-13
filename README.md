@@ -1,5 +1,11 @@
 # Bingo Parachute
 
+![Bingo Parachute Logo](docs/images/logo.png)
+
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/bingo-parachute?logo=modrinth&label=Modrinth)
+](https://modrinth.com/mod/bingo-parachute)
+
+
 English | [中文](docs/README_zh.md)
 
 `Bingo Parachute` is a server-side Fabric addon for `Yet Another Bingo`.

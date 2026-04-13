@@ -1,5 +1,11 @@
 # Bingo Parachute
 
+![Bingo Parachute Logo](images/logo.png)
+
+[![Modrinth Downloads](https://img.shields.io/modrinth/dt/bingo-parachute?logo=modrinth&label=Modrinth)
+](https://modrinth.com/mod/bingo-parachute)
+
+
 [English](../README.md) | 中文
 
 `Bingo Parachute` 是一个只面向 `Yet Another Bingo` 的服务端附属 Fabric mod。
