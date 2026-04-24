@@ -13,7 +13,7 @@
     "issues": "https://github.com/TJUUS-Studio/BingoParachute/issues"
   },
   "license": "All-Rights-Reserved",
-  "environment": "server",
+  "environment": "dedicated_server_only",
   "entrypoints": {
     "main": [
       "dev.bingoparachute.BingoParachuteMod"

@@ -82,10 +82,6 @@ The current gameplay flow is:
    - The original inventory and equipment are restored
    - The player is removed from active airdrop tracking
 
-For a more detailed internal flow description, see:
-
-- `.ai_doc/current_strategy_and_flow.md`
-
 ## Build
 
 Compile both versions:
